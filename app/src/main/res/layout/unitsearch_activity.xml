@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/bgimage"
+    tools:context=".UnitSearchActivity">
+
+    <!-- AutoCompleteTextView for searching Units -->
+    <AutoCompleteTextView
+        android:id="@+id/unitAutoCompleteTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Type to search Unit"
+        android:layout_marginTop="16dp" />
+
+    <!-- Spinner for selecting Rank -->
+    <Spinner
+        android:id="@+id/rankSpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_marginTop="16dp" />
+
+    <!-- ScrollView for scrollable results -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="true"
+        android:layout_marginTop="16dp">
+
+        <!-- LinearLayout to display results -->
+        <LinearLayout
+            android:id="@+id/resultsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="4dp">
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>
