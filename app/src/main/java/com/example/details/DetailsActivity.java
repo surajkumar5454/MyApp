@@ -3,80 +3,56 @@ package com.example.details;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Typeface;
 import android.os.Bundle;
-import android.text.Html;
+import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textview.MaterialTextView;
 
 public class DetailsActivity extends AppCompatActivity {
 
-    private TextView textViewResult;
+    private static final String TAG = "DetailsActivity";
     private SQLiteDatabase database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.details_activity);
-        textViewResult = findViewById(R.id.textViewUid);
+
+        Toast.makeText(this, "Long press on any value to copy", Toast.LENGTH_LONG).show();
+
         database = SQLiteDatabase.openDatabase(getDatabasePath("pims_all.db").toString(), null, SQLiteDatabase.OPEN_READONLY);
 
         // Retrieve uidno from intent extra
         String uid = getIntent().getStringExtra("uidno");
         searchRecords(uid);
 
-        Button btn_punishment = findViewById(R.id.btn_punishment);
-        btn_punishment.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(DetailsActivity.this, PunishmentActivity.class);
-                intent.putExtra("uidno", uid);
-                startActivity(intent);
-            }
+        // Initialize buttons with Material Design IDs
+        MaterialButton btnTraining = findViewById(R.id.btnTraining);
+        MaterialButton btnPosting = findViewById(R.id.btnPosting);
+        MaterialButton btnLeave = findViewById(R.id.btnLeave);
+
+        btnTraining.setOnClickListener(v -> {
+            Intent intent = new Intent(DetailsActivity.this, TrainingActivity.class);
+            intent.putExtra("uidno", uid);
+            startActivity(intent);
         });
 
-        Button btn_training = findViewById(R.id.btn_training);
-        btn_training.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                Intent intent = new Intent(DetailsActivity.this, TrainingActivity.class);
-                intent.putExtra("uidno", uid);
-                startActivity(intent);
-            }
+        btnPosting.setOnClickListener(v -> {
+            Intent intent = new Intent(DetailsActivity.this, PostingActivity.class);
+            intent.putExtra("uidno", uid);
+            startActivity(intent);
         });
 
-        Button btn_apar = findViewById(R.id.btn_apar);
-        btn_apar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(DetailsActivity.this, AparActivity.class);
-                intent.putExtra("uidno", uid);
-                startActivity(intent);
-            }
-        });
-
-        Button btn_posting = findViewById(R.id.btn_posting);
-        btn_posting.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(DetailsActivity.this, PostingActivity.class);
-                intent.putExtra("uidno", uid);
-                startActivity(intent);
-            }
-        });
-
-        Button btn_leave = findViewById(R.id.btn_leave);
-        btn_leave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(DetailsActivity.this, LeaveActivity.class);
-                intent.putExtra("uidno", uid);
-                startActivity(intent);
-            }
+        btnLeave.setOnClickListener(v -> {
+            Intent intent = new Intent(DetailsActivity.this, LeaveActivity.class);
+            intent.putExtra("uidno", uid);
+            startActivity(intent);
         });
     }
 
@@ -84,35 +60,308 @@ public class DetailsActivity extends AppCompatActivity {
         Cursor cursor = null;
         try {
             cursor = database.rawQuery("SELECT * FROM parmanentinfo WHERE uidno LIKE ?", new String[]{"%" + uid + "%"});
-            StringBuilder queryResult = new StringBuilder();
-
+            
             if (cursor.moveToFirst()) {
-                do {
-                    String[] columnNames = cursor.getColumnNames();
-                    for (int i = 0; i < cursor.getColumnCount(); i++) {
-                        String columnName = columnNames[i];
-                        String columnValue = cursor.getString(i);
-                        // Format the output with HTML for better readability
-                        queryResult.append("<b>").append(columnName).append(":</b> ").append(columnValue).append("<br/>");
-                    }
-                    queryResult.append("<br/><br/>"); // Separate rows with double line break
-                } while (cursor.moveToNext());
-            }
-
-            String result = queryResult.toString();
-            if (!result.isEmpty()) {
-                textViewResult.setText(Html.fromHtml(result)); // Use HTML for formatting
+                displayDetails(cursor);
             } else {
-                textViewResult.setText("");
                 Toast.makeText(this, "No results found", Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error searching records", e);
             Toast.makeText(this, "Error occurred while fetching data", Toast.LENGTH_SHORT).show();
         } finally {
             if (cursor != null) {
                 cursor.close();
             }
+        }
+    }
+
+    private void displayDetails(Cursor cursor) {
+        try {
+            // Header section
+            MaterialTextView nameText = findViewById(R.id.nameText);
+            MaterialTextView rankText = findViewById(R.id.rankText);
+            MaterialTextView uidText = findViewById(R.id.uidText);
+
+            String name = getColumnValue(cursor, "name");
+            String rank = getColumnValue(cursor, "rank");
+            String uid = getColumnValue(cursor, "uidno");
+
+            nameText.setText(name);
+         //   rankText.setText(rank);
+            uidText.setText("UID: " + uid);
+
+            // Personal Details section
+            TableLayout personalTable = findViewById(R.id.personalDetailsTable);
+            personalTable.removeAllViews();
+
+            // Date of Birth
+            MaterialTextView dobLabel = new MaterialTextView(this);
+            dobLabel.setText("Date Of Birth: ");
+            dobLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            
+            MaterialTextView dobValue = new MaterialTextView(this);
+            String dobText = getColumnValue(cursor, "dob");
+            dobValue.setText(dobText);
+            dobValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            dobValue.setTypeface(null, Typeface.BOLD);
+            dobValue.setPadding(32, 0, 0, 0);
+            makeCopyable(dobValue, "Date of Birth", dobText);
+            
+            TableRow dobRow = new TableRow(this);
+            dobRow.setPadding(0, 8, 0, 8);
+            dobRow.addView(dobLabel);
+            dobRow.addView(dobValue);
+            personalTable.addView(dobRow);
+
+            // Blood Group
+            MaterialTextView bloodGroupLabel = new MaterialTextView(this);
+            bloodGroupLabel.setText("Blood Group: ");
+            bloodGroupLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            
+            MaterialTextView bloodGroupValue = new MaterialTextView(this);
+            bloodGroupValue.setText(getColumnValue(cursor, "bloodgr"));
+            bloodGroupValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            bloodGroupValue.setTypeface(null, Typeface.BOLD);
+            bloodGroupValue.setPadding(32, 0, 0, 0);
+            
+            TableRow bloodGroupRow = new TableRow(this);
+            bloodGroupRow.setPadding(0, 8, 0, 8);
+            bloodGroupRow.addView(bloodGroupLabel);
+            bloodGroupRow.addView(bloodGroupValue);
+            personalTable.addView(bloodGroupRow);
+
+            // Religion
+            MaterialTextView religionLabel = new MaterialTextView(this);
+            religionLabel.setText("Religion: ");
+            religionLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            
+            MaterialTextView religionValue = new MaterialTextView(this);
+            religionValue.setText(getColumnValue(cursor, "rel_cat"));
+            religionValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            religionValue.setTypeface(null, Typeface.BOLD);
+            religionValue.setPadding(32, 0, 0, 0);
+            
+            TableRow religionRow = new TableRow(this);
+            religionRow.setPadding(0, 8, 0, 8);
+            religionRow.addView(religionLabel);
+            religionRow.addView(religionValue);
+            personalTable.addView(religionRow);
+
+            // Father's Name
+            MaterialTextView fatherLabel = new MaterialTextView(this);
+            fatherLabel.setText("Father's Name: ");
+            fatherLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            
+            MaterialTextView fatherValue = new MaterialTextView(this);
+            fatherValue.setText(getColumnValue(cursor, "fathername"));
+            fatherValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            fatherValue.setTypeface(null, Typeface.BOLD);
+            fatherValue.setPadding(32, 0, 0, 0);
+            
+            TableRow fatherRow = new TableRow(this);
+            fatherRow.setPadding(0, 8, 0, 8);
+            fatherRow.addView(fatherLabel);
+            fatherRow.addView(fatherValue);
+            personalTable.addView(fatherRow);
+
+            // Mother's Name
+            MaterialTextView motherLabel = new MaterialTextView(this);
+            motherLabel.setText("Mother's Name: ");
+            motherLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            
+            MaterialTextView motherValue = new MaterialTextView(this);
+            motherValue.setText(getColumnValue(cursor, "mothername"));
+            motherValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            motherValue.setTypeface(null, Typeface.BOLD);
+            motherValue.setPadding(32, 0, 0, 0);
+            
+            TableRow motherRow = new TableRow(this);
+            motherRow.setPadding(0, 8, 0, 8);
+            motherRow.addView(motherLabel);
+            motherRow.addView(motherValue);
+            personalTable.addView(motherRow);
+
+            // Gender
+            MaterialTextView genderLabel = new MaterialTextView(this);
+            genderLabel.setText("Gender: ");
+            genderLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            
+            MaterialTextView genderValue = new MaterialTextView(this);
+            genderValue.setText(getColumnValue(cursor, "gen"));
+            genderValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            genderValue.setTypeface(null, Typeface.BOLD);
+            genderValue.setPadding(32, 0, 0, 0);
+            
+            TableRow genderRow = new TableRow(this);
+            genderRow.setPadding(0, 8, 0, 8);
+            genderRow.addView(genderLabel);
+            genderRow.addView(genderValue);
+            personalTable.addView(genderRow);
+
+            // Marital Status
+            MaterialTextView maritalLabel = new MaterialTextView(this);
+            maritalLabel.setText("Marital Status: ");
+            maritalLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            
+            MaterialTextView maritalValue = new MaterialTextView(this);
+            maritalValue.setText(getColumnValue(cursor, "marital_st"));
+            maritalValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            maritalValue.setTypeface(null, Typeface.BOLD);
+            maritalValue.setPadding(32, 0, 0, 0);
+            
+            TableRow maritalRow = new TableRow(this);
+            maritalRow.setPadding(0, 8, 0, 8);
+            maritalRow.addView(maritalLabel);
+            maritalRow.addView(maritalValue);
+            personalTable.addView(maritalRow);
+
+            // ID Mark
+            MaterialTextView idMarkLabel = new MaterialTextView(this);
+            idMarkLabel.setText("ID Mark: ");
+            idMarkLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            
+            MaterialTextView idMarkValue = new MaterialTextView(this);
+            idMarkValue.setText(getColumnValue(cursor, "idmark"));
+            idMarkValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            idMarkValue.setTypeface(null, Typeface.BOLD);
+            idMarkValue.setPadding(32, 0, 0, 0);
+            
+            TableRow idMarkRow = new TableRow(this);
+            idMarkRow.setPadding(0, 8, 0, 8);
+            idMarkRow.addView(idMarkLabel);
+            idMarkRow.addView(idMarkValue);
+            personalTable.addView(idMarkRow);
+
+            // Contact Details section
+            TableLayout contactTable = findViewById(R.id.contactDetailsTable);
+            contactTable.removeAllViews();
+
+            MaterialTextView mobLabel = new MaterialTextView(this);
+            mobLabel.setText("Mobile No: ");
+            mobLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            
+            MaterialTextView mobValue = new MaterialTextView(this);
+            String mobText = getColumnValue(cursor, "mobno");
+            mobValue.setText(mobText);
+            mobValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            mobValue.setTypeface(null, Typeface.BOLD);
+            mobValue.setPadding(32, 0, 0, 0);
+            makeCopyable(mobValue, "Mobile Number", mobText);
+            
+            TableRow mobRow = new TableRow(this);
+            mobRow.setPadding(0, 8, 0, 8);
+            mobRow.addView(mobLabel);
+            mobRow.addView(mobValue);
+            contactTable.addView(mobRow);
+
+            MaterialTextView homeLabel = new MaterialTextView(this);
+            homeLabel.setText("Home Number: ");
+            homeLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            
+            MaterialTextView homeValue = new MaterialTextView(this);
+            homeValue.setText(getColumnValue(cursor, "homephone"));
+            homeValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            homeValue.setTypeface(null, Typeface.BOLD);
+            homeValue.setPadding(32, 0, 0, 0);
+            
+            TableRow homeRow = new TableRow(this);
+            homeRow.setPadding(0, 8, 0, 8);
+            homeRow.addView(homeLabel);
+            homeRow.addView(homeValue);
+            contactTable.addView(homeRow);
+
+            MaterialTextView emailLabel = new MaterialTextView(this);
+            emailLabel.setText("Email: ");
+            emailLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            
+            MaterialTextView emailValue = new MaterialTextView(this);
+            emailValue.setText(getColumnValue(cursor, "eMail"));
+            emailValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+            emailValue.setTypeface(null, Typeface.BOLD);
+            emailValue.setPadding(32, 0, 0, 0);
+            
+            TableRow emailRow = new TableRow(this);
+            emailRow.setPadding(0, 8, 0, 8);
+            emailRow.addView(emailLabel);
+            emailRow.addView(emailValue);
+            contactTable.addView(emailRow);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error displaying details", e);
+            Toast.makeText(this, "Error displaying details", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private String getColumnValue(Cursor cursor, String columnName) {
+        try {
+            int columnIndex = cursor.getColumnIndex(columnName);
+            if (columnIndex != -1) {
+                String value = cursor.getString(columnIndex);
+                return value != null ? value : "Not Available";
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting column value for " + columnName, e);
+        }
+        return "Not Available";
+    }
+
+    private void addTableRow(TableLayout table, String label, String value) {
+        TableRow row = new TableRow(this);
+        row.setPadding(0, 8, 0, 8);
+
+        MaterialTextView labelView = new MaterialTextView(this);
+        labelView.setText(label);
+        labelView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+        labelView.setTextColor(getColor(com.google.android.material.R.color.material_on_surface_emphasis_medium));
+
+        MaterialTextView valueView = new MaterialTextView(this);
+        valueView.setText(value);
+        valueView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+        valueView.setTypeface(null, Typeface.BOLD);
+        valueView.setPadding(32, 0, 0, 0);
+        
+        makeCopyable(valueView, label, value);
+        
+        valueView.setBackgroundResource(android.R.drawable.list_selector_background);
+
+        row.addView(labelView);
+        row.addView(valueView);
+
+        // Add a bottom divider with a light gray color
+        View divider = new View(this);
+        divider.setBackgroundColor(getColor(R.color.divider_color));
+        divider.setAlpha(0.2f); // Make the divider subtle
+        
+        TableRow.LayoutParams dividerParams = new TableRow.LayoutParams(
+                TableRow.LayoutParams.MATCH_PARENT,
+                (int) getResources().getDimension(com.google.android.material.R.dimen.material_divider_thickness)
+        );
+        dividerParams.topMargin = 8;
+        dividerParams.bottomMargin = 8;
+        divider.setLayoutParams(dividerParams);
+        
+        table.addView(row);
+        table.addView(divider);
+    }
+
+    private void makeCopyable(MaterialTextView textView, String label, String value) {
+        textView.setOnLongClickListener(v -> {
+            android.content.ClipboardManager clipboard = 
+                (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            android.content.ClipData clip = 
+                android.content.ClipData.newPlainText(label, value);
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(this, label + " copied to clipboard", Toast.LENGTH_SHORT).show();
+            return true;
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (database != null && database.isOpen()) {
+            database.close();
         }
     }
 }

@@ -3,25 +3,28 @@ package com.example.details;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.android.material.textview.MaterialTextView;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UnitSearchActivity extends AppCompatActivity {
 
-    private AutoCompleteTextView unitAutoCompleteTextView;
-    private Spinner rankSpinner;
+    private static final String TAG = "UnitSearchActivity";
+    private MaterialAutoCompleteTextView unitAutoCompleteTextView;
+    private MaterialAutoCompleteTextView rankSpinner;
+    private TextInputLayout rankSpinnerLayout;
     private LinearLayout resultsLayout;
     private SQLiteDatabase database;
 
@@ -30,44 +33,34 @@ public class UnitSearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.unitsearch_activity);
 
-        // Initialize UI components
+        // Initialize views
         unitAutoCompleteTextView = findViewById(R.id.unitAutoCompleteTextView);
         rankSpinner = findViewById(R.id.rankSpinner);
+        rankSpinnerLayout = findViewById(R.id.rankSpinnerLayout);
         resultsLayout = findViewById(R.id.resultsLayout);
-        rankSpinner.setVisibility(View.GONE); // Initially hide rank spinner
+
+        // Setup toolbar
+        findViewById(R.id.topAppBar).setOnClickListener(v -> finish());
 
         // Initialize database
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         dbHelper.createDatabase();
         database = dbHelper.getDatabase();
 
-        // Load values for AutoCompleteTextView (unit names)
+        // Load unit suggestions
         loadUnitSuggestions();
 
-        // Set onItemClickListener for AutoCompleteTextView
-        unitAutoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String selectedUnit = (String) parent.getItemAtPosition(position);
-                // Fetch and load rank values based on selected unit
-                loadRankValues(selectedUnit);
-            }
+        // Set unit selection listener
+        unitAutoCompleteTextView.setOnItemClickListener((parent, view, position, id) -> {
+            String selectedUnit = (String) parent.getItemAtPosition(position);
+            loadRankValues(selectedUnit);
         });
 
-        // Set onItemSelectedListener for rank Spinner
-        rankSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedRank = (String) parent.getItemAtPosition(position);
-                String selectedUnit = unitAutoCompleteTextView.getText().toString();
-                // Query and display personnel based on selected unit and rank
-                queryAndDisplayResults(selectedUnit, selectedRank);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Do nothing
-            }
+        // Set rank selection listener
+        rankSpinner.setOnItemClickListener((parent, view, position, id) -> {
+            String selectedRank = (String) parent.getItemAtPosition(position);
+            String selectedUnit = unitAutoCompleteTextView.getText().toString();
+            queryAndDisplayResults(selectedUnit, selectedRank);
         });
     }
 
@@ -97,100 +90,156 @@ public class UnitSearchActivity extends AppCompatActivity {
         }
     }
 
-    // Method to load rank values after a unit is selected
-
-        private void loadRankValues(String selectedUnit) {
-            List<String> rankList = new ArrayList<>();
-            rankList.add("Select Rank"); // Add default option
-
-            Cursor cursor = null;
-            try {
-                // Query ranks that are present in the selected unit
-                cursor = database.rawQuery("SELECT DISTINCT r.rnk_nm FROM rnk_brn_mas r, joininfo j, unitdep u " +
-                        "WHERE u.unit_cd = j.unit AND j.rank = r.rnk_cd AND u.unit_nm = ? order by rnk_nm asc", new String[]{selectedUnit});
-                if (cursor.moveToFirst()) {
-                    do {
-                        rankList.add(cursor.getString(0)); // Add available ranks to list for the unit
-                    } while (cursor.moveToNext());
-                }
-
-                // Set Spinner adapter to show the ranks for the selected unit
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, rankList);
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                rankSpinner.setAdapter(adapter);
-
-                // Show the Spinner if there are ranks available
-                if (rankList.size() > 1) {
-                    rankSpinner.setVisibility(View.VISIBLE);
-                } else {
-                  //  Toast.makeText(this, "No ranks available for the selected unit", Toast.LENGTH_SHORT).show();
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-        }
-
-
-    private void queryAndDisplayResults(String selectedUnit, String selectedRank) {
+    private void loadRankValues(String selectedUnit) {
+        List<String> ranks = new ArrayList<>();
         Cursor cursor = null;
         try {
-            if (selectedRank.equals("Select Rank"))
-            {
-                return;
-            }
-            // Updated query to use DISTINCT and avoid duplicates
-            cursor = database.rawQuery("SELECT DISTINCT j.uidno, p.name, r.rnk_nm, r.brn_nm FROM parmanentinfo p, joininfo j, unitdep u, rnk_brn_mas r " +
-                            "WHERE u.unit_cd = j.unit AND j.rank = r.rnk_cd AND j.branch = r.brn_cd AND j.dateofrelv IS NULL " +
-                            "AND p.uidno = j.uidno AND u.unit_nm = ? AND r.rnk_nm = ?",
-                    new String[]{selectedUnit, selectedRank});
-
-            // Clear previous results
-            resultsLayout.removeAllViews();
+            cursor = database.rawQuery(
+                "SELECT DISTINCT r.rnk_nm FROM rnk_brn_mas r " +
+                "JOIN joininfo j ON j.rank = r.rnk_cd " +
+                "JOIN unitdep u ON u.unit_cd = j.unit " +
+                "WHERE u.unit_nm = ? " +
+                "ORDER BY r.rnk_nm",
+                new String[]{selectedUnit}
+            );
 
             if (cursor.moveToFirst()) {
                 do {
-                    final String uid = cursor.getString(0); // Unique ID for each personnel
-                    String name = cursor.getString(1);
-                    String rank = cursor.getString(2);
-                    String branch = cursor.getString(3);
-
-                    // Create TextView for each result
-                    TextView resultTextView = new TextView(this);
-                    resultTextView.setText(uid + "  " + name + ", " + rank + " (" + branch + ")");
-                    resultTextView.setPadding(16, 16, 16, 16);
-
-                    // Make the TextView clickable
-                    resultTextView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            // Create an intent to start the DetailsActivity and pass the UID
-                            Intent intent = new Intent(UnitSearchActivity.this, DetailsActivity.class);
-                            intent.putExtra("uidno", uid); // Pass UID as an extra
-                            startActivity(intent); // Start DetailsActivity
-                        }
-                    });
-
-                    // Add the TextView to the results layout
-                    resultsLayout.addView(resultTextView);
-
+                    ranks.add(cursor.getString(0));
                 } while (cursor.moveToNext());
-            } else {
-                Toast.makeText(this, "No personnel found for the selected unit and rank", Toast.LENGTH_SHORT).show();
-            }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (cursor != null) {
-                cursor.close();
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                    this,
+                    android.R.layout.simple_dropdown_item_1line,
+                    ranks
+                );
+                rankSpinner.setAdapter(adapter);
+                rankSpinnerLayout.setVisibility(View.VISIBLE);
+            } else {
+                Toast.makeText(this, "No ranks found for selected unit", Toast.LENGTH_SHORT).show();
+                rankSpinnerLayout.setVisibility(View.GONE);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading ranks", e);
+        } finally {
+            if (cursor != null) cursor.close();
         }
     }
 
+    private void queryAndDisplayResults(String selectedUnit, String selectedRank) {
+        resultsLayout.removeAllViews();
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                "SELECT DISTINCT p.uidno, p.name, r.rnk_nm, r.brn_nm " +
+                "FROM parmanentinfo p " +
+                "JOIN joininfo j ON p.uidno = j.uidno " +
+                "JOIN unitdep u ON u.unit_cd = j.unit " +
+                "JOIN rnk_brn_mas r ON j.rank = r.rnk_cd AND j.branch = r.brn_cd " +
+                "WHERE j.dateofrelv IS NULL AND u.unit_nm = ? AND r.rnk_nm = ? " +
+                "ORDER BY p.name",
+                new String[]{selectedUnit, selectedRank}
+            );
 
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    addPersonCard(cursor);
+                } while (cursor.moveToNext());
+            } else {
+                showNoResultsMessage();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error executing search", e);
+            Toast.makeText(this, "Error occurred while fetching data", Toast.LENGTH_SHORT).show();
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+    }
+
+    private void addPersonCard(Cursor cursor) {
+        MaterialCardView card = new MaterialCardView(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, 0, 0, 16);
+        card.setLayoutParams(cardParams);
+        card.setCardElevation(4f);
+        card.setRadius(12f);
+        card.setContentPadding(24, 24, 24, 24);
+        card.setCardBackgroundColor(getColor(R.color.card_content_background));
+
+        LinearLayout contentLayout = new LinearLayout(this);
+        contentLayout.setOrientation(LinearLayout.VERTICAL);
+        contentLayout.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+
+        String uid = cursor.getString(cursor.getColumnIndex("uidno"));
+        addDetailRow(contentLayout, "Name", cursor.getString(cursor.getColumnIndex("name")));
+        addDetailRow(contentLayout, "UID", uid);
+        addDetailRow(contentLayout, "Rank", cursor.getString(cursor.getColumnIndex("rnk_nm")));
+        addDetailRow(contentLayout, "Branch", cursor.getString(cursor.getColumnIndex("brn_nm")));
+
+        card.addView(contentLayout);
+        card.setOnClickListener(v -> {
+            Intent intent = new Intent(this, DetailsActivity.class);
+            intent.putExtra("uidno", uid);
+            startActivity(intent);
+        });
+
+        resultsLayout.addView(card);
+    }
+
+    private void addDetailRow(LinearLayout parent, String label, String value) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(0, 8, 0, 8);
+        
+        MaterialTextView labelView = new MaterialTextView(this);
+        labelView.setText(label + ": ");
+        labelView.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        labelView.setTextColor(getColor(R.color.card_label_text));
+        labelView.setTextSize(16);
+
+        MaterialTextView valueView = new MaterialTextView(this);
+        valueView.setText(value != null && !value.isEmpty() ? value : "Not Available");
+        valueView.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        valueView.setTextColor(getColor(R.color.card_value_text));
+        valueView.setTypeface(null, Typeface.BOLD);
+        valueView.setTextSize(16);
+        valueView.setPadding(16, 0, 0, 0);
+
+        row.addView(labelView);
+        row.addView(valueView);
+        parent.addView(row);
+
+        // Add a subtle divider
+        View divider = new View(this);
+        divider.setBackgroundColor(getColor(R.color.divider_color));
+        divider.setAlpha(0.1f);
+        LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            1
+        );
+        dividerParams.setMargins(0, 8, 0, 8);
+        divider.setLayoutParams(dividerParams);
+        parent.addView(divider);
+    }
+
+    private void showNoResultsMessage() {
+        MaterialTextView messageView = new MaterialTextView(this);
+        messageView.setText("No personnel found in selected unit and rank");
+        messageView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        messageView.setTextColor(getColor(R.color.card_value_text));
+        messageView.setTextSize(16);
+        resultsLayout.addView(messageView);
+    }
 }

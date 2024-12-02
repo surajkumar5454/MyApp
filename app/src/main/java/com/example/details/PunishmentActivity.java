@@ -1,153 +1,229 @@
 package com.example.details;
-import android.annotation.SuppressLint;
-import android.content.Intent;
+
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textview.MaterialTextView;
 
 public class PunishmentActivity extends AppCompatActivity {
 
-    private EditText uidNosearch;
-
-    private Button btnQuery;
-    private ListView listViewResults;
+    private static final String TAG = "PunishmentActivity";
+    private TextInputEditText uidInput;
+    private MaterialButton searchButton;
+    private LinearLayout resultsLayout;
     private SQLiteDatabase database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.punishment_activity);
+
+        // Initialize views
+        uidInput = findViewById(R.id.uidInput);
+        searchButton = findViewById(R.id.searchButton);
+        resultsLayout = findViewById(R.id.detailsLayout);
+
+        // Initialize database
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         dbHelper.createDatabase();
         database = dbHelper.getDatabase();
-        uidNosearch = findViewById(R.id.uidNo);
-        btnQuery = findViewById(R.id.btnQuery);
-        listViewResults = findViewById(R.id.listViewResults);
 
+        // Setup toolbar
+        MaterialToolbar toolbar = findViewById(R.id.topAppBar);
+        toolbar.setNavigationOnClickListener(v -> finish());
+
+        // Get UID from intent if passed
         String uid = getIntent().getStringExtra("uidno");
-        if (uid==null) {
-        // Query button click listener
-        btnQuery.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                String uidNo = uidNosearch.getText().toString().trim();
-                // Check if UID is empty
-                if (uidNo.isEmpty()) {
-                    Toast.makeText(PunishmentActivity.this, "Please enter a valid UID.", Toast.LENGTH_SHORT).show();
-                    return;  // Stop execution if the UID is blank
-                }
-                executeQuery(uidNo);
-            }
-        });
-        }
-        else
-        {
+        if (uid != null) {
+            uidInput.setText(uid);
             executeQuery(uid);
         }
-    }
 
-    private void executeQuery(String query) {
-
-        Cursor cursor = null;
-        try {
-            cursor = database.rawQuery("SELECT * FROM punshiment WHERE uidno LIKE ?", new String[]{"%" + query + "%"});
-            LinearLayout layout = findViewById(R.id.detailsLayout); // Assuming you have a LinearLayout with id "detailsLayout" in your activity_details.xml
-            layout.removeAllViews();
-            int count = 0;
-            if (cursor.moveToFirst()) {
-                do {
-                    StringBuilder queryResult = new StringBuilder();
-                    String uid = cursor.getString(0);
-                    String name = cursor.getString(1);
-                    String category = cursor.getString(2);
-                    String order = cursor.getString(3);
-                    String punishmentType = cursor.getString(4);
-                    String details = cursor.getString(4);
-                    if (count==0) {
-                        queryResult.append(uid).append("\n");
-                        queryResult.append(name).append("\n\n\n");
-                        count = 1;
-                    }
-
-                    queryResult.append("Category: ").append(category).append("\n");
-                    queryResult.append("Order No: ").append(order).append("\n");
-                    queryResult.append("Punishment Type: ").append(punishmentType).append("\n");
-                    queryResult.append("Details: ").append(details).append("\n");
-                    queryResult.append("\n");
-
-                    Intent intent = new Intent(this, DetailsActivity.class);
-                    intent.putExtra("uidno", uid);
-                // Create a new TextView to display the record
-                    TextView recordTextView = new TextView(this);
-                    recordTextView.setLayoutParams(new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT));
-                    recordTextView.setText(queryResult);
-                    // Add the TextView to the layout
-                    layout.addView(recordTextView);
-
-                    // Add a separator between records (optional)
-                    View separatorView = new View(this);
-                    separatorView.setLayoutParams(new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            1)); // Height of separator
-                    separatorView.setBackgroundColor(0); // Color of separator
-                    layout.addView(separatorView);
-                    recordTextView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                         //   startActivity(intent);
-                         //   executeQuery("SELECT * FROM posting_info WHERE uidno=?", new String[]{uid});
-                        }
-                    });
-
-                } while (cursor.moveToNext());
+        // Set click listener for search button
+        searchButton.setOnClickListener(v -> {
+            String uidNo = uidInput.getText().toString().trim();
+            if (uidNo.isEmpty()) {
+                Toast.makeText(PunishmentActivity.this, "Please enter a valid UID", Toast.LENGTH_SHORT).show();
+                return;
             }
-            else
-            {
-                // If no records were found, display a message to the user
-                Toast.makeText(this, "No records found with the UID: " + query, Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-        btnQuery.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                String uid = getIntent().getStringExtra("uidno");
-                System.out.println("uid value : " + uid);
-                String uidNo = uidNosearch.getText().toString().trim();
-                // Check if UID is empty
-                if (uidNo.isEmpty()) {
-                    Toast.makeText(PunishmentActivity.this, "Please enter a valid UID.", Toast.LENGTH_SHORT).show();
-                    return;  // Stop execution if the UID is blank
-                }
-                executeQuery(uidNo);
-            }
+            executeQuery(uidNo);
         });
     }
 
+    private void executeQuery(String uid) {
+        resultsLayout.removeAllViews();
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                "SELECT DISTINCT p.uidno, p.name, u.unit_nm, r.rnk_nm, r.brn_nm, " +
+                "pun.punishmentType, pun.dateOfPunishment, pun.details " +
+                "FROM parmanentinfo p " +
+                "JOIN joininfo j ON p.uidno = j.uidno " +
+                "JOIN punishment pun ON p.uidno = pun.uidno " +
+                "JOIN unitdep u ON u.unit_cd = j.unit " +
+                "JOIN rnk_brn_mas r ON j.rank = r.rnk_cd AND j.branch = r.brn_cd " +
+                "WHERE j.dateofrelv IS NULL AND p.uidno = ? " +
+                "ORDER BY pun.dateOfPunishment DESC",
+                new String[]{uid}
+            );
 
+            if (cursor != null && cursor.moveToFirst()) {
+                // Add header card with name and basic info
+                addHeaderCard(
+                    cursor.getString(cursor.getColumnIndex("name")),
+                    cursor.getString(cursor.getColumnIndex("uidno")),
+                    cursor.getString(cursor.getColumnIndex("unit_nm")),
+                    cursor.getString(cursor.getColumnIndex("rnk_nm")) + 
+                    " (" + cursor.getString(cursor.getColumnIndex("brn_nm")) + ")"
+                );
+
+                // Add punishment cards
+                do {
+                    addPunishmentCard(cursor);
+                } while (cursor.moveToNext());
+            } else {
+                showNoResultsMessage();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error executing search", e);
+            Toast.makeText(this, "Error occurred while fetching data", Toast.LENGTH_SHORT).show();
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+    }
+
+    private void addHeaderCard(String name, String uid, String unit, String rank) {
+        MaterialCardView headerCard = new MaterialCardView(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, 0, 0, 24);
+        headerCard.setLayoutParams(cardParams);
+        headerCard.setCardElevation(4f);
+        headerCard.setRadius(12f);
+        headerCard.setContentPadding(24, 24, 24, 24);
+        headerCard.setCardBackgroundColor(getColor(R.color.card_header_background));
+
+        LinearLayout contentLayout = new LinearLayout(this);
+        contentLayout.setOrientation(LinearLayout.VERTICAL);
+        contentLayout.setGravity(Gravity.CENTER);
+
+        addHeaderText(contentLayout, name, 20, true);
+        addHeaderText(contentLayout, "UID: " + uid, 16, false);
+        addHeaderText(contentLayout, unit, 16, false);
+        addHeaderText(contentLayout, rank, 16, false);
+
+        headerCard.addView(contentLayout);
+        resultsLayout.addView(headerCard);
+    }
+
+    private void addHeaderText(LinearLayout parent, String text, int textSize, boolean isBold) {
+        MaterialTextView textView = new MaterialTextView(this);
+        textView.setText(text);
+        textView.setTextSize(textSize);
+        textView.setTextColor(getColor(R.color.card_header_text));
+        if (isBold) textView.setTypeface(null, Typeface.BOLD);
+        textView.setGravity(Gravity.CENTER);
+        textView.setPadding(0, 4, 0, 4);
+        parent.addView(textView);
+    }
+
+    private void addPunishmentCard(Cursor cursor) {
+        MaterialCardView card = new MaterialCardView(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, 0, 0, 16);
+        card.setLayoutParams(cardParams);
+        card.setCardElevation(4f);
+        card.setRadius(12f);
+        card.setContentPadding(24, 24, 24, 24);
+        card.setCardBackgroundColor(getColor(R.color.card_content_background));
+
+        LinearLayout contentLayout = new LinearLayout(this);
+        contentLayout.setOrientation(LinearLayout.VERTICAL);
+        contentLayout.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+
+        addDetailRow(contentLayout, "Type", cursor.getString(cursor.getColumnIndex("punishmentType")));
+        addDetailRow(contentLayout, "Date", cursor.getString(cursor.getColumnIndex("dateOfPunishment")));
+        addDetailRow(contentLayout, "Details", cursor.getString(cursor.getColumnIndex("details")));
+
+        card.addView(contentLayout);
+        resultsLayout.addView(card);
+    }
+
+    private void addDetailRow(LinearLayout parent, String label, String value) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(0, 8, 0, 8);
+        
+        MaterialTextView labelView = new MaterialTextView(this);
+        labelView.setText(label + ": ");
+        labelView.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        labelView.setTextColor(getColor(R.color.card_label_text));
+        labelView.setTextSize(16);
+
+        MaterialTextView valueView = new MaterialTextView(this);
+        valueView.setText(value != null && !value.isEmpty() ? value : "Not Available");
+        valueView.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        valueView.setTextColor(getColor(R.color.card_value_text));
+        valueView.setTypeface(null, Typeface.BOLD);
+        valueView.setTextSize(16);
+        valueView.setPadding(16, 0, 0, 0);
+
+        row.addView(labelView);
+        row.addView(valueView);
+        parent.addView(row);
+
+        // Add a subtle divider
+        View divider = new View(this);
+        divider.setBackgroundColor(getColor(R.color.divider_color));
+        divider.setAlpha(0.1f);
+        LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            1
+        );
+        dividerParams.setMargins(0, 8, 0, 8);
+        divider.setLayoutParams(dividerParams);
+        parent.addView(divider);
+    }
+
+    private void showNoResultsMessage() {
+        MaterialTextView messageView = new MaterialTextView(this);
+        messageView.setText("No punishment records found");
+        messageView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        messageView.setTextColor(getColor(R.color.card_value_text));
+        messageView.setTextSize(16);
+        resultsLayout.addView(messageView);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (database != null && database.isOpen()) {
+            database.close();
+        }
+    }
 }

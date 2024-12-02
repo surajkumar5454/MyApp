@@ -1,162 +1,201 @@
 package com.example.details;
 
-import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.google.android.material.textview.MaterialTextView;
 import java.util.ArrayList;
 import java.util.List;
+import com.example.details.databinding.RanksearchActivityBinding;
 
 public class RankSearchActivity extends AppCompatActivity {
 
-    private Spinner dropdownSpinner;
-    private LinearLayout resultsLayout;
+    private static final String TAG = "RankSearchActivity";
+    private RanksearchActivityBinding binding;
     private SQLiteDatabase database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.ranksearch_activity);
-
-        // Initialize UI components
-        dropdownSpinner = findViewById(R.id.dropdownSpinner);
-        resultsLayout = findViewById(R.id.resultsLayout);
+        binding = RanksearchActivityBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         // Initialize database
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         dbHelper.createDatabase();
         database = dbHelper.getDatabase();
 
-        // Load dropdown values from a table column
-        loadDropdownValues();
+        // Setup toolbar
+        binding.topAppBar.setNavigationOnClickListener(v -> finish());
 
-        // Set onItemSelectedListener to query another table based on the selection
-        dropdownSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedValue = (String) parent.getItemAtPosition(position);
-                if (!selectedValue.equals("Select Rank")) {
-                    queryAndDisplayResults(selectedValue);
-                }
-            }
+        // Load ranks into spinner
+        loadRanks();
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Do nothing
+        // Set click listener for search button
+        binding.searchButton.setOnClickListener(v -> {
+            String selectedRank = binding.rankSpinner.getText().toString();
+            if (selectedRank.isEmpty()) {
+                Toast.makeText(RankSearchActivity.this, "Please select a rank", Toast.LENGTH_SHORT).show();
+                return;
             }
+            executeSearch(selectedRank);
         });
     }
 
-    // Method to load the dropdown values from a column in the table
-    private void loadDropdownValues() {
-        List<String> values = new ArrayList<>();
-        values.add("Select Rank"); // Add a default option
-
+    private void loadRanks() {
+        List<String> ranks = new ArrayList<>();
         Cursor cursor = null;
         try {
-            // Query to get values from the specific column of the table
-            cursor = database.rawQuery("SELECT DISTINCT rnk_nm, brn_nm FROM rnk_brn_mas order by rnk_nm asc", null);
+            cursor = database.rawQuery(
+                "SELECT DISTINCT rnk_nm FROM rnk_brn_mas ORDER BY rnk_nm",
+                null
+            );
             if (cursor.moveToFirst()) {
                 do {
-                    String rank = cursor.getString(0);
-                    String branch = cursor.getString(1);
-                    String fullRank = rank.concat(" (").concat(branch).concat(")");
-                    values.add(fullRank); // Add combined rank and branch to the list
+                    ranks.add(cursor.getString(0));
                 } while (cursor.moveToNext());
             }
-
-            // Set the adapter for the Spinner (dropdown)
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, values);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            dropdownSpinner.setAdapter(adapter);
-
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error loading ranks", e);
         } finally {
-            if (cursor != null) {
-                cursor.close();
+            if (cursor != null) cursor.close();
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+            this,
+            android.R.layout.simple_dropdown_item_1line,
+            ranks
+        );
+        binding.rankSpinner.setAdapter(adapter);
+    }
+
+    private void executeSearch(String rank) {
+        binding.resultsLayout.removeAllViews();
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                "SELECT DISTINCT p.uidno, p.name, u.unit_nm, r.rnk_nm, r.brn_nm " +
+                "FROM parmanentinfo p " +
+                "JOIN joininfo j ON p.uidno = j.uidno " +
+                "JOIN unitdep u ON u.unit_cd = j.unit " +
+                "JOIN rnk_brn_mas r ON j.rank = r.rnk_cd AND j.branch = r.brn_cd " +
+                "WHERE j.dateofrelv IS NULL AND r.rnk_nm = ? " +
+                "ORDER BY p.name",
+                new String[]{rank}
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    addPersonCard(cursor);
+                } while (cursor.moveToNext());
+            } else {
+                showNoResultsMessage();
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error executing search", e);
+            Toast.makeText(this, "Error occurred while fetching data", Toast.LENGTH_SHORT).show();
+        } finally {
+            if (cursor != null) cursor.close();
         }
     }
 
-    // Method to query another table based on the selected value and display results
-    private void queryAndDisplayResults(String selectedValue) {
-        Cursor cursor = null;
+    private void addPersonCard(Cursor cursor) {
+        MaterialCardView card = new MaterialCardView(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, 0, 0, 16);
+        card.setLayoutParams(cardParams);
+        card.setCardElevation(4f);
+        card.setRadius(12f);
+        card.setContentPadding(24, 24, 24, 24);
+        card.setCardBackgroundColor(getColor(R.color.card_content_background));
 
-        // Split the selectedValue to separate rank and branch
-        String[] rankBranch = selectedValue.split("\\(");
-        String rank = rankBranch[0].trim(); // Extract rank name
-        String branch = rankBranch[1].replace(")", "").trim(); // Extract branch name
+        LinearLayout contentLayout = new LinearLayout(this);
+        contentLayout.setOrientation(LinearLayout.VERTICAL);
+        contentLayout.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
 
-        try {
-            // Query personnel data based on the selected rank and branch
-            cursor = database.rawQuery(
-                    "SELECT DISTINCT j.uidno, p.name, r.rnk_nm, r.brn_nm, u.unit_nm " +
-                            "FROM parmanentinfo p " +
-                            "JOIN joininfo j ON p.uidno = j.uidno " +
-                            "JOIN unitdep u ON u.unit_cd = j.unit " +
-                            "JOIN rnk_brn_mas r ON j.rank = r.rnk_cd AND j.branch = r.brn_cd " +
-                            "WHERE j.dateofrelv IS NULL AND r.rnk_nm = ? AND r.brn_nm = ?",
-                    new String[]{rank, branch});
+        addDetailRow(contentLayout, "Name", cursor.getString(cursor.getColumnIndex("name")));
+        addDetailRow(contentLayout, "UID", cursor.getString(cursor.getColumnIndex("uidno")));
+        addDetailRow(contentLayout, "Unit", cursor.getString(cursor.getColumnIndex("unit_nm")));
+        addDetailRow(contentLayout, "Branch", cursor.getString(cursor.getColumnIndex("brn_nm")));
 
-            // Clear previous results
-            resultsLayout.removeAllViews();
-            int count = 0;
-            if (cursor.moveToFirst()) {
-                do {
-                    count ++ ;
-                    // Retrieve values from the result set
-                    String uid = cursor.getString(0);
-                    String name = cursor.getString(1);
-                    String rankName = cursor.getString(2);
-                    String branchName = cursor.getString(3);
-                    String unit = cursor.getString(4);
+        card.addView(contentLayout);
+        binding.resultsLayout.addView(card);
+    }
 
-                    // Display results dynamically
-                    TextView resultTextView = new TextView(this);
-                    resultTextView.setText(uid + "  " + name + ", " + rankName + " (" + branchName + ")"+ ", " +unit);
-                    resultsLayout.addView(resultTextView);
+    private void addDetailRow(LinearLayout parent, String label, String value) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(0, 8, 0, 8);
+        
+        MaterialTextView labelView = new MaterialTextView(this);
+        labelView.setText(label + ": ");
+        labelView.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        labelView.setTextColor(getColor(R.color.card_label_text));
+        labelView.setTextSize(16);
 
-                    // Set the result as clickable
-                    Intent intent = new Intent(this, DetailsActivity.class);
-                    intent.putExtra("uidno", uid);
+        MaterialTextView valueView = new MaterialTextView(this);
+        valueView.setText(value != null && !value.isEmpty() ? value : "Not Available");
+        valueView.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        valueView.setTextColor(getColor(R.color.card_value_text));
+        valueView.setTypeface(null, Typeface.BOLD);
+        valueView.setTextSize(16);
+        valueView.setPadding(16, 0, 0, 0);
 
-                    resultTextView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            startActivity(intent);
-                        }
-                    });
-                } while (cursor.moveToNext());
-                String numberString = Integer.toString(count);
-                TextView resultCount = new TextView(this);
-                resultCount.setTextColor(Color.RED);
-                resultCount.setGravity(Gravity.CENTER);
-                resultCount.setTypeface(null, android.graphics.Typeface.BOLD);
-                resultCount.setText("\n\nTotal : "+numberString);
-                resultsLayout.addView(resultCount);
-            } else {
-                Toast.makeText(this, "No results found for " + selectedValue, Toast.LENGTH_SHORT).show();
-            }
+        row.addView(labelView);
+        row.addView(valueView);
+        parent.addView(row);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
+        // Add a subtle divider
+        View divider = new View(this);
+        divider.setBackgroundColor(getColor(R.color.divider_color));
+        divider.setAlpha(0.1f);
+        LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            1
+        );
+        dividerParams.setMargins(0, 8, 0, 8);
+        divider.setLayoutParams(dividerParams);
+        parent.addView(divider);
+    }
+
+    private void showNoResultsMessage() {
+        MaterialTextView messageView = new MaterialTextView(this);
+        messageView.setText("No personnel found with this rank");
+        messageView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        messageView.setTextColor(getColor(R.color.card_value_text));
+        messageView.setTextSize(16);
+        binding.resultsLayout.addView(messageView);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (database != null && database.isOpen()) {
+            database.close();
         }
     }
 }

@@ -1,79 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    android:padding="16dp"
-    android:elevation="4dp">
+    style="@style/Widget.Material3.CardView.Elevated"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:padding="16dp">
 
-        <!-- UID and Name -->
-        <TextView
-            android:id="@+id/uidName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="UID, Name"
-            android:textStyle="bold"
-            android:textSize="18sp"
-            android:textColor="@android:color/black" />
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/avatarImage"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="16dp"
+            app:shapeAppearance="@style/ShapeAppearance.Material3.Corner.Full"/>
 
-        <!-- Unit -->
-        <TextView
-            android:id="@+id/unit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Unit: XYZ"
-            android:textColor="@android:color/darker_gray"
-            android:textSize="16sp"
-            android:layout_marginTop="4dp"/>
-
-        <!-- Rank -->
-        <TextView
-            android:id="@+id/rank"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Rank: ABC"
-            android:textColor="@android:color/darker_gray"
-            android:textSize="16sp"
-            android:layout_marginTop="4dp"/>
-
-        <!-- Date of Joining and Relieving -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/dateOfJoin"
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/titleText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Date of Joining: 01/01/2020"
-                android:textColor="@android:color/darker_gray"
-                android:textSize="16sp"/>
+                android:textAppearance="?attr/textAppearanceTitleMedium"/>
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/subtitleText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" | "
-                android:textColor="@android:color/darker_gray"
-                android:textSize="16sp"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"/>
-
-            <TextView
-                android:id="@+id/dateOfRelieve"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Date of Relieving: 01/01/2022"
-                android:textColor="@android:color/darker_gray"
-                android:textSize="16sp"/>
-
+                android:textAppearance="?attr/textAppearanceBodyMedium"/>
         </LinearLayout>
 
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+
+</com.google.android.material.card.MaterialCardView>
