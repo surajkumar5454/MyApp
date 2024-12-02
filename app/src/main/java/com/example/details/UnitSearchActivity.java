@@ -5,13 +5,19 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Filter;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputLayout;
@@ -33,14 +39,15 @@ public class UnitSearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.unitsearch_activity);
 
+        // Setup toolbar with back button
+        MaterialToolbar toolbar = findViewById(R.id.topAppBar);
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
+
         // Initialize views
         unitAutoCompleteTextView = findViewById(R.id.unitAutoCompleteTextView);
         rankSpinner = findViewById(R.id.rankSpinner);
         rankSpinnerLayout = findViewById(R.id.rankSpinnerLayout);
         resultsLayout = findViewById(R.id.resultsLayout);
-
-        // Setup toolbar
-        findViewById(R.id.topAppBar).setOnClickListener(v -> finish());
 
         // Initialize database
         DatabaseHelper dbHelper = new DatabaseHelper(this);
@@ -69,20 +76,98 @@ public class UnitSearchActivity extends AppCompatActivity {
         List<String> unitNames = new ArrayList<>();
         Cursor cursor = null;
         try {
-            cursor = database.rawQuery("SELECT DISTINCT unit_nm FROM unitdep", null);
+            cursor = database.rawQuery("SELECT DISTINCT unit_nm FROM unitdep ORDER BY unit_nm", null);
             if (cursor.moveToFirst()) {
                 do {
-                    unitNames.add(cursor.getString(0)); // Add unit names to the list
+                    unitNames.add(cursor.getString(0));
                 } while (cursor.moveToNext());
             }
 
-            // Set adapter for AutoCompleteTextView
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, unitNames);
+            // Create custom adapter for filtering
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, 
+                android.R.layout.simple_dropdown_item_1line, unitNames) {
+                @Override
+                public Filter getFilter() {
+                    return new Filter() {
+                        @Override
+                        protected FilterResults performFiltering(CharSequence constraint) {
+                            FilterResults results = new FilterResults();
+                            List<String> suggestions = new ArrayList<>();
+
+                            if (constraint == null || constraint.length() == 0) {
+                                suggestions.addAll(unitNames);
+                            } else {
+                                String filterPattern = constraint.toString().toLowerCase().trim();
+                                for (String unit : unitNames) {
+                                    if (unit.toLowerCase().contains(filterPattern)) {
+                                        suggestions.add(unit);
+                                    }
+                                }
+                            }
+
+                            results.values = suggestions;
+                            results.count = suggestions.size();
+                            return results;
+                        }
+
+                        @Override
+                        protected void publishResults(CharSequence constraint, FilterResults results) {
+                            clear();
+                            if (results != null && results.count > 0) {
+                                addAll((List<String>) results.values);
+                            }
+                            notifyDataSetChanged();
+                        }
+                    };
+                }
+            };
+
             unitAutoCompleteTextView.setAdapter(adapter);
-            unitAutoCompleteTextView.setThreshold(1); // Start showing suggestions after 1 character
+            unitAutoCompleteTextView.setThreshold(1); // Show suggestions after 1 character
+            
+            // Enable text input
+            unitAutoCompleteTextView.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+            
+            // Show dropdown when focused
+            unitAutoCompleteTextView.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus && unitAutoCompleteTextView.getText().length() == 0) {
+                    unitAutoCompleteTextView.showDropDown();
+                }
+            });
+
+            // Show filtered suggestions as user types
+            unitAutoCompleteTextView.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    // Show dropdown with filtered results
+                    if (!unitAutoCompleteTextView.isPopupShowing()) {
+                        unitAutoCompleteTextView.showDropDown();
+                    }
+                    
+                    // Clear previous selections
+                    rankSpinnerLayout.setVisibility(View.GONE);
+                    resultsLayout.removeAllViews();
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+
+            // Set dropdown properties
+            unitAutoCompleteTextView.setDropDownWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+            unitAutoCompleteTextView.setDropDownHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+            
+            // Show all suggestions on click
+            unitAutoCompleteTextView.setOnClickListener(v -> {
+                unitAutoCompleteTextView.showDropDown();
+            });
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error loading unit suggestions", e);
+            Toast.makeText(this, "Error loading units", Toast.LENGTH_SHORT).show();
         } finally {
             if (cursor != null) {
                 cursor.close();

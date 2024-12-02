@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textview.MaterialTextView;
+import com.google.android.material.appbar.MaterialToolbar;
 
 public class DetailsActivity extends AppCompatActivity {
 
@@ -24,7 +25,13 @@ public class DetailsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.details_activity);
 
-        Toast.makeText(this, "Long press on any value to copy", Toast.LENGTH_LONG).show();
+        // Setup toolbar with back button
+        MaterialToolbar toolbar = findViewById(R.id.topAppBar);
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
+        // or for newer Android versions:
+        // toolbar.setNavigationOnClickListener(v -> finish());
+
+     //   Toast.makeText(this, "Long press on any value to copy", Toast.LENGTH_LONG).show();
 
         database = SQLiteDatabase.openDatabase(getDatabasePath("pims_all.db").toString(), null, SQLiteDatabase.OPEN_READONLY);
 
@@ -246,7 +253,11 @@ public class DetailsActivity extends AppCompatActivity {
             mobValue.setText(mobText);
             mobValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
             mobValue.setTypeface(null, Typeface.BOLD);
-            mobValue.setPadding(32, 0, 0, 0);
+            mobValue.setPadding(32, 8, 32, 8);
+            mobValue.setEnabled(true);
+            mobValue.setClickable(true);
+            mobValue.setFocusable(true);
+            mobValue.setLongClickable(true);
             makeCopyable(mobValue, "Mobile Number", mobText);
             
             TableRow mobRow = new TableRow(this);
@@ -309,6 +320,10 @@ public class DetailsActivity extends AppCompatActivity {
     private void addTableRow(TableLayout table, String label, String value) {
         TableRow row = new TableRow(this);
         row.setPadding(0, 8, 0, 8);
+        
+        // Prevent row from intercepting touches
+        row.setClickable(false);
+        row.setLongClickable(false);
 
         MaterialTextView labelView = new MaterialTextView(this);
         labelView.setText(label);
@@ -346,14 +361,40 @@ public class DetailsActivity extends AppCompatActivity {
     }
 
     private void makeCopyable(MaterialTextView textView, String label, String value) {
+        // Enable interaction
+        textView.setEnabled(true);
+        textView.setClickable(true);
+        textView.setFocusable(true);
+        textView.setLongClickable(true); // Make sure long click is enabled
+        
+        // Add ripple effect for feedback
+        textView.setForeground(getDrawable(android.R.drawable.list_selector_background));
+        
+        // Set long click listener
         textView.setOnLongClickListener(v -> {
-            android.content.ClipboardManager clipboard = 
-                (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-            android.content.ClipData clip = 
-                android.content.ClipData.newPlainText(label, value);
-            clipboard.setPrimaryClip(clip);
-            Toast.makeText(this, label + " copied to clipboard", Toast.LENGTH_SHORT).show();
-            return true;
+            try {
+                android.content.ClipboardManager clipboard = 
+                    (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                android.content.ClipData clip = 
+                    android.content.ClipData.newPlainText(label, value);
+                clipboard.setPrimaryClip(clip);
+                
+                // Vibrate for feedback
+                v.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+                
+                // Show toast
+                Toast.makeText(this, label + " copied!", Toast.LENGTH_SHORT).show();
+                return true;
+            } catch (Exception e) {
+                Log.e(TAG, "Error copying to clipboard", e);
+                Toast.makeText(this, "Failed to copy text", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
+
+        // Add click hint
+        textView.setOnClickListener(v -> {
+            Toast.makeText(this, "Long press to copy " + label, Toast.LENGTH_SHORT).show();
         });
     }
 
