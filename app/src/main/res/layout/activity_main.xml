@@ -42,6 +42,50 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        app:boxStrokeColor="@color/card_label_text"
+                        app:hintTextColor="@color/card_label_text"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/uidSearchInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Enter UID"
+                            android:textColor="@color/card_value_text"
+                            android:inputType="number"
+                            android:maxLines="1"
+                            android:completionThreshold="1"
+                            android:alpha="1"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnUidSearch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Search"
+                        app:icon="@drawable/ic_search"
+                        style="@style/Widget.Material3.Button"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardElevation="4dp"
+                app:cardCornerRadius="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
 
@@ -52,6 +96,7 @@
                         android:text="Search All"
                         android:textSize="16sp"
                         app:icon="@drawable/ic_search"
+                        android:backgroundTint="@color/md_theme_light_surfaceVariant"
                         style="@style/Widget.Material3.Button.ElevatedButton"/>
 
                     <LinearLayout
@@ -151,6 +196,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Advanced Search"
+                        android:gravity="center"
+                        android:textColor="#006400"
                         android:textAppearance="?attr/textAppearanceTitleLarge"
                         android:layout_marginBottom="16dp"/>
 
@@ -188,6 +235,7 @@
                         android:text="Master Search"
                         android:textSize="16sp"
                         app:icon="@drawable/ic_search"
+                        android:backgroundTint="@color/md_theme_light_surfaceVariant"
                         style="@style/Widget.Material3.Button.ElevatedButton"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

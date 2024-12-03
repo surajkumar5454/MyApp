@@ -159,7 +159,7 @@ public class AllDynamicSearchActivity extends AppCompatActivity {
         fieldParams.setMargins(0, 0, 8, 0);
         fieldInputLayout.setLayoutParams(fieldParams);
         fieldInputLayout.setHint("Select Field");
-        fieldInputLayout.setHintTextColor(getColorStateList(R.color.text_secondary));
+        fieldInputLayout.setHintTextColor(getColorStateList(R.color.text_primary));
         fieldInputLayout.setBoxStrokeColor(getColor(R.color.text_primary));
 
         MaterialAutoCompleteTextView fieldSpinner = new MaterialAutoCompleteTextView(this);
@@ -179,7 +179,7 @@ public class AllDynamicSearchActivity extends AppCompatActivity {
         valueParams.setMargins(8, 0, 8, 0);
         valueInputLayout.setLayoutParams(valueParams);
         valueInputLayout.setHint("Enter Value");
-        valueInputLayout.setHintTextColor(getColorStateList(R.color.text_secondary));
+        valueInputLayout.setHintTextColor(getColorStateList(R.color.text_primary));
         valueInputLayout.setBoxStrokeColor(getColor(R.color.text_primary));
 
         MaterialAutoCompleteTextView valueInput = new MaterialAutoCompleteTextView(this);

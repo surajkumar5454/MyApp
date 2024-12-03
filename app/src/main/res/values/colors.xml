@@ -12,7 +12,7 @@
     <color name="md_theme_light_onTertiary">#FFFFFF</color>
     <color name="md_theme_light_tertiaryContainer">#C2E8FC</color>
     <color name="md_theme_light_onTertiaryContainer">#001F2A</color>
-    <color name="md_theme_light_surface">#FBF9F7</color>
+    <color name="md_theme_light_surface">#FFFFFF</color>
     <color name="md_theme_light_onSurface">#191C1B</color>
     <color name="md_theme_light_surfaceVariant">#DCE5DD</color>
     <color name="md_theme_light_onSurfaceVariant">#404943</color>
@@ -34,14 +34,14 @@
     <color name="md_theme_dark_surfaceVariant">#404943</color>
     <color name="md_theme_dark_onSurfaceVariant">#C0C9C1</color>
     <color name="divider_color">#1F000000</color>
-    <color name="card_header_background">#E8F5E9</color>
-    <color name="card_header_text">#1B5E20</color>
+    <color name="card_header_background">#006C4C</color>
+    <color name="card_header_text">#FFFFFF</color>
     <color name="card_content_background">#FFFFFF</color>
-    <color name="card_label_text">#1B5E20</color>
+    <color name="card_label_text">#006C4C</color>
     <color name="card_value_text">#000000</color>
-    <color name="search_button_background">#2E7D32</color>
+    <color name="search_button_background">#006C4C</color>
     <color name="search_button_text">#FFFFFF</color>
     <color name="text_primary">#000000</color>
-    <color name="text_secondary">#333333</color>
-    <color name="text_hint">#666666</color>
+    <color name="text_secondary">#006C4C</color>
+    <color name="text_hint">#757575</color>
 </resources>

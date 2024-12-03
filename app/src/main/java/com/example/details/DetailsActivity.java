@@ -3,22 +3,28 @@ package com.example.details;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.textview.MaterialTextView;
 import com.google.android.material.appbar.MaterialToolbar;
+import android.app.Dialog;
 
 public class DetailsActivity extends AppCompatActivity {
 
     private static final String TAG = "DetailsActivity";
     private SQLiteDatabase database;
+    private SQLiteDatabase imagesDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +40,9 @@ public class DetailsActivity extends AppCompatActivity {
      //   Toast.makeText(this, "Long press on any value to copy", Toast.LENGTH_LONG).show();
 
         database = SQLiteDatabase.openDatabase(getDatabasePath("pims_all.db").toString(), null, SQLiteDatabase.OPEN_READONLY);
+
+        // Initialize images database
+        imagesDatabase = SQLiteDatabase.openDatabase(getDatabasePath("images_resize.db").toString(), null, SQLiteDatabase.OPEN_READONLY);
 
         // Retrieve uidno from intent extra
         String uid = getIntent().getStringExtra("uidno");
@@ -70,6 +79,7 @@ public class DetailsActivity extends AppCompatActivity {
             
             if (cursor.moveToFirst()) {
                 displayDetails(cursor);
+                loadProfileImage(uid);
             } else {
                 Toast.makeText(this, "No results found", Toast.LENGTH_SHORT).show();
             }
@@ -320,43 +330,37 @@ public class DetailsActivity extends AppCompatActivity {
     private void addTableRow(TableLayout table, String label, String value) {
         TableRow row = new TableRow(this);
         row.setPadding(0, 8, 0, 8);
-        
-        // Prevent row from intercepting touches
-        row.setClickable(false);
-        row.setLongClickable(false);
 
         MaterialTextView labelView = new MaterialTextView(this);
-        labelView.setText(label);
+        labelView.setText(label + ": ");
         labelView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-        labelView.setTextColor(getColor(com.google.android.material.R.color.material_on_surface_emphasis_medium));
+        labelView.setTextColor(getColor(R.color.card_label_text));
+        labelView.setTypeface(null, Typeface.BOLD);
 
         MaterialTextView valueView = new MaterialTextView(this);
         valueView.setText(value);
         valueView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+        valueView.setTextColor(getColor(R.color.card_value_text));
         valueView.setTypeface(null, Typeface.BOLD);
         valueView.setPadding(32, 0, 0, 0);
         
         makeCopyable(valueView, label, value);
-        
-        valueView.setBackgroundResource(android.R.drawable.list_selector_background);
 
         row.addView(labelView);
         row.addView(valueView);
+        table.addView(row);
 
-        // Add a bottom divider with a light gray color
+        // Add divider
         View divider = new View(this);
         divider.setBackgroundColor(getColor(R.color.divider_color));
-        divider.setAlpha(0.2f); // Make the divider subtle
-        
+        divider.setAlpha(0.3f);  // Increased divider opacity
         TableRow.LayoutParams dividerParams = new TableRow.LayoutParams(
                 TableRow.LayoutParams.MATCH_PARENT,
-                (int) getResources().getDimension(com.google.android.material.R.dimen.material_divider_thickness)
+                2  // Increased divider thickness
         );
         dividerParams.topMargin = 8;
         dividerParams.bottomMargin = 8;
         divider.setLayoutParams(dividerParams);
-        
-        table.addView(row);
         table.addView(divider);
     }
 
@@ -398,11 +402,70 @@ public class DetailsActivity extends AppCompatActivity {
         });
     }
 
+    private void loadProfileImage(String uid) {
+        ShapeableImageView profileImage = findViewById(R.id.profileImage);
+        Cursor cursor = null;
+        try {
+            cursor = imagesDatabase.rawQuery(
+                "SELECT image FROM images WHERE UIDNO = ?",
+                new String[]{uid}
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                byte[] imageBytes = cursor.getBlob(cursor.getColumnIndex("image"));
+                if (imageBytes != null && imageBytes.length > 0) {
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = false;
+                    options.inSampleSize = 1;
+
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length, options);
+                    if (bitmap != null) {
+                        profileImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        profileImage.setImageBitmap(bitmap);
+                        
+                        // Add click listener to show full-size image
+                        profileImage.setOnClickListener(v -> showFullSizeImage(bitmap));
+                    } else {
+                        profileImage.setImageResource(R.drawable.ic_profile_placeholder);
+                    }
+                } else {
+                    profileImage.setImageResource(R.drawable.ic_profile_placeholder);
+                }
+            } else {
+                profileImage.setImageResource(R.drawable.ic_profile_placeholder);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading profile image", e);
+            profileImage.setImageResource(R.drawable.ic_profile_placeholder);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+    }
+
+    private void showFullSizeImage(Bitmap bitmap) {
+        // Create dialog
+        Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(R.layout.dialog_profile_image);
+        
+        // Get the ShapeableImageView from dialog
+        ShapeableImageView fullSizeImage = dialog.findViewById(R.id.fullSizeImage);
+        fullSizeImage.setImageBitmap(bitmap);
+        
+        // Add click listener to dismiss dialog when clicking anywhere
+        dialog.findViewById(android.R.id.content).setOnClickListener(v -> dialog.dismiss());
+        
+        // Show dialog
+        dialog.show();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (database != null && database.isOpen()) {
             database.close();
+        }
+        if (imagesDatabase != null && imagesDatabase.isOpen()) {
+            imagesDatabase.close();
         }
     }
 }
