@@ -108,205 +108,52 @@ public class DetailsActivity extends AppCompatActivity {
          //   rankText.setText(rank);
             uidText.setText("UID: " + uid);
 
-            // Personal Details section
+            // Personal Details
             TableLayout personalTable = findViewById(R.id.personalDetailsTable);
             personalTable.removeAllViews();
+            addTableRow(personalTable, "Date of Birth", getColumnValue(cursor, "dob"));
+            addTableRow(personalTable, "Gender", getColumnValue(cursor, "gen"));
+            addTableRow(personalTable, "Father's Name", getColumnValue(cursor, "fathername"));
+            addTableRow(personalTable, "Mother's Name", getColumnValue(cursor, "mothername"));
+            addTableRow(personalTable, "Marital Status", getColumnValue(cursor, "marital_st"));
+            addTableRow(personalTable, "Education", getColumnValue(cursor, "education"));
+            addTableRow(personalTable, "Category", getCasteCategoryName(cursor.getString(cursor.getColumnIndex("caste_cat"))));
+            addTableRow(personalTable, "ID Mark", getColumnValue(cursor, "idmark"));
+            addTableRow(personalTable, "PAN", getColumnValue(cursor, "pan"));
+            addTableRow(personalTable, "Aadhar", getColumnValue(cursor, "old_aadhar"));
 
-            // Date of Birth
-            MaterialTextView dobLabel = new MaterialTextView(this);
-            dobLabel.setText("Date Of Birth: ");
-            dobLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            
-            MaterialTextView dobValue = new MaterialTextView(this);
-            String dobText = getColumnValue(cursor, "dob");
-            dobValue.setText(dobText);
-            dobValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            dobValue.setTypeface(null, Typeface.BOLD);
-            dobValue.setPadding(32, 0, 0, 0);
-            makeCopyable(dobValue, "Date of Birth", dobText);
-            
-            TableRow dobRow = new TableRow(this);
-            dobRow.setPadding(0, 8, 0, 8);
-            dobRow.addView(dobLabel);
-            dobRow.addView(dobValue);
-            personalTable.addView(dobRow);
+            // Address Details
+            TableLayout addressTable = findViewById(R.id.addressDetailsTable);
+            addressTable.removeAllViews();
+            addTableRow(addressTable, "Spouse Name", getColumnValue(cursor, "hname"));
+            addTableRow(addressTable, "Address", getColumnValue(cursor, "paddress"));
+            addTableRow(addressTable, "Police Station", getColumnValue(cursor, "policestation"));
+            addTableRow(addressTable, "District", getDistrictName(cursor.getString(cursor.getColumnIndex("district"))));
+            addTableRow(addressTable, "State", getStateName(cursor.getString(cursor.getColumnIndex("state"))));
+            addTableRow(addressTable, "Tahsil", getColumnValue(cursor, "tahsil"));
+            addTableRow(addressTable, "Pin Code", getColumnValue(cursor, "pincode"));
 
-            // Blood Group
-            MaterialTextView bloodGroupLabel = new MaterialTextView(this);
-            bloodGroupLabel.setText("Blood Group: ");
-            bloodGroupLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            
-            MaterialTextView bloodGroupValue = new MaterialTextView(this);
-            bloodGroupValue.setText(getColumnValue(cursor, "bloodgr"));
-            bloodGroupValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            bloodGroupValue.setTypeface(null, Typeface.BOLD);
-            bloodGroupValue.setPadding(32, 0, 0, 0);
-            
-            TableRow bloodGroupRow = new TableRow(this);
-            bloodGroupRow.setPadding(0, 8, 0, 8);
-            bloodGroupRow.addView(bloodGroupLabel);
-            bloodGroupRow.addView(bloodGroupValue);
-            personalTable.addView(bloodGroupRow);
+            // Service Details
+            TableLayout serviceTable = findViewById(R.id.serviceDetailsTable);
+            serviceTable.removeAllViews();
+            addTableRow(serviceTable, "Unit", getUnitName(cursor.getString(cursor.getColumnIndex("unit"))));
+            addTableRow(serviceTable, "Rank", getRankName(cursor.getString(cursor.getColumnIndex("rank"))));
+            addTableRow(serviceTable, "Cadre", getCadreName(cursor.getString(cursor.getColumnIndex("cadre"))));
+            addTableRow(serviceTable, "Date of Joining", getDateOfJoining(cursor.getString(cursor.getColumnIndex("uidno"))));
+            addTableRow(serviceTable, "Date of Present Rank", getColumnValue(cursor, "datepresentrank"));
 
-            // Religion
-            MaterialTextView religionLabel = new MaterialTextView(this);
-            religionLabel.setText("Religion: ");
-            religionLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            
-            MaterialTextView religionValue = new MaterialTextView(this);
-            religionValue.setText(getColumnValue(cursor, "rel_cat"));
-            religionValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            religionValue.setTypeface(null, Typeface.BOLD);
-            religionValue.setPadding(32, 0, 0, 0);
-            
-            TableRow religionRow = new TableRow(this);
-            religionRow.setPadding(0, 8, 0, 8);
-            religionRow.addView(religionLabel);
-            religionRow.addView(religionValue);
-            personalTable.addView(religionRow);
+            // Bank Details
+            TableLayout bankTable = findViewById(R.id.bankDetailsTable);
+            bankTable.removeAllViews();
+            addTableRow(bankTable, "Bank Name", getColumnValue(cursor, "bankname"));
+            addTableRow(bankTable, "Account Number", getColumnValue(cursor, "account"));
 
-            // Father's Name
-            MaterialTextView fatherLabel = new MaterialTextView(this);
-            fatherLabel.setText("Father's Name: ");
-            fatherLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            
-            MaterialTextView fatherValue = new MaterialTextView(this);
-            fatherValue.setText(getColumnValue(cursor, "fathername"));
-            fatherValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            fatherValue.setTypeface(null, Typeface.BOLD);
-            fatherValue.setPadding(32, 0, 0, 0);
-            
-            TableRow fatherRow = new TableRow(this);
-            fatherRow.setPadding(0, 8, 0, 8);
-            fatherRow.addView(fatherLabel);
-            fatherRow.addView(fatherValue);
-            personalTable.addView(fatherRow);
-
-            // Mother's Name
-            MaterialTextView motherLabel = new MaterialTextView(this);
-            motherLabel.setText("Mother's Name: ");
-            motherLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            
-            MaterialTextView motherValue = new MaterialTextView(this);
-            motherValue.setText(getColumnValue(cursor, "mothername"));
-            motherValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            motherValue.setTypeface(null, Typeface.BOLD);
-            motherValue.setPadding(32, 0, 0, 0);
-            
-            TableRow motherRow = new TableRow(this);
-            motherRow.setPadding(0, 8, 0, 8);
-            motherRow.addView(motherLabel);
-            motherRow.addView(motherValue);
-            personalTable.addView(motherRow);
-
-            // Gender
-            MaterialTextView genderLabel = new MaterialTextView(this);
-            genderLabel.setText("Gender: ");
-            genderLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            
-            MaterialTextView genderValue = new MaterialTextView(this);
-            genderValue.setText(getColumnValue(cursor, "gen"));
-            genderValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            genderValue.setTypeface(null, Typeface.BOLD);
-            genderValue.setPadding(32, 0, 0, 0);
-            
-            TableRow genderRow = new TableRow(this);
-            genderRow.setPadding(0, 8, 0, 8);
-            genderRow.addView(genderLabel);
-            genderRow.addView(genderValue);
-            personalTable.addView(genderRow);
-
-            // Marital Status
-            MaterialTextView maritalLabel = new MaterialTextView(this);
-            maritalLabel.setText("Marital Status: ");
-            maritalLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            
-            MaterialTextView maritalValue = new MaterialTextView(this);
-            maritalValue.setText(getColumnValue(cursor, "marital_st"));
-            maritalValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            maritalValue.setTypeface(null, Typeface.BOLD);
-            maritalValue.setPadding(32, 0, 0, 0);
-            
-            TableRow maritalRow = new TableRow(this);
-            maritalRow.setPadding(0, 8, 0, 8);
-            maritalRow.addView(maritalLabel);
-            maritalRow.addView(maritalValue);
-            personalTable.addView(maritalRow);
-
-            // ID Mark
-            MaterialTextView idMarkLabel = new MaterialTextView(this);
-            idMarkLabel.setText("ID Mark: ");
-            idMarkLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            
-            MaterialTextView idMarkValue = new MaterialTextView(this);
-            idMarkValue.setText(getColumnValue(cursor, "idmark"));
-            idMarkValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            idMarkValue.setTypeface(null, Typeface.BOLD);
-            idMarkValue.setPadding(32, 0, 0, 0);
-            
-            TableRow idMarkRow = new TableRow(this);
-            idMarkRow.setPadding(0, 8, 0, 8);
-            idMarkRow.addView(idMarkLabel);
-            idMarkRow.addView(idMarkValue);
-            personalTable.addView(idMarkRow);
-
-            // Contact Details section
+            // Contact Details (existing)
             TableLayout contactTable = findViewById(R.id.contactDetailsTable);
             contactTable.removeAllViews();
-
-            MaterialTextView mobLabel = new MaterialTextView(this);
-            mobLabel.setText("Mobile No: ");
-            mobLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            
-            MaterialTextView mobValue = new MaterialTextView(this);
-            String mobText = getColumnValue(cursor, "mobno");
-            mobValue.setText(mobText);
-            mobValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            mobValue.setTypeface(null, Typeface.BOLD);
-            mobValue.setPadding(32, 8, 32, 8);
-            mobValue.setEnabled(true);
-            mobValue.setClickable(true);
-            mobValue.setFocusable(true);
-            mobValue.setLongClickable(true);
-            makeCopyable(mobValue, "Mobile Number", mobText);
-            
-            TableRow mobRow = new TableRow(this);
-            mobRow.setPadding(0, 8, 0, 8);
-            mobRow.addView(mobLabel);
-            mobRow.addView(mobValue);
-            contactTable.addView(mobRow);
-
-            MaterialTextView homeLabel = new MaterialTextView(this);
-            homeLabel.setText("Home Number: ");
-            homeLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            
-            MaterialTextView homeValue = new MaterialTextView(this);
-            homeValue.setText(getColumnValue(cursor, "homephone"));
-            homeValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            homeValue.setTypeface(null, Typeface.BOLD);
-            homeValue.setPadding(32, 0, 0, 0);
-            
-            TableRow homeRow = new TableRow(this);
-            homeRow.setPadding(0, 8, 0, 8);
-            homeRow.addView(homeLabel);
-            homeRow.addView(homeValue);
-            contactTable.addView(homeRow);
-
-            MaterialTextView emailLabel = new MaterialTextView(this);
-            emailLabel.setText("Email: ");
-            emailLabel.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
-            
-            MaterialTextView emailValue = new MaterialTextView(this);
-            emailValue.setText(getColumnValue(cursor, "eMail"));
-            emailValue.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-            emailValue.setTypeface(null, Typeface.BOLD);
-            emailValue.setPadding(32, 0, 0, 0);
-            
-            TableRow emailRow = new TableRow(this);
-            emailRow.setPadding(0, 8, 0, 8);
-            emailRow.addView(emailLabel);
-            emailRow.addView(emailValue);
-            contactTable.addView(emailRow);
+            addTableRow(contactTable, "Mobile", getColumnValue(cursor, "mobno"));
+            addTableRow(contactTable, "Home Phone", getColumnValue(cursor, "homephone"));
+            addTableRow(contactTable, "Email", getColumnValue(cursor, "eMail"));
 
         } catch (Exception e) {
             Log.e(TAG, "Error displaying details", e);
@@ -456,6 +303,146 @@ public class DetailsActivity extends AppCompatActivity {
         
         // Show dialog
         dialog.show();
+    }
+
+    private String getStateName(String id) {
+        if (id == null || id.isEmpty()) return "Not Available";
+        
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                "SELECT state_nm FROM district WHERE state_cd = ?",
+                new String[]{id}
+            );
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting state name", e);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return "Not Available";
+    }
+
+    private String getDistrictName(String id) {
+        if (id == null || id.isEmpty()) return "Not Available";
+        
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                "SELECT dist_nm FROM district WHERE dist_cd = ?",
+                new String[]{id}
+            );
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting district name", e);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return "Not Available";
+    }
+
+    private String getCasteCategoryName(String id) {
+        if (id == null || id.isEmpty()) return "Not Available";
+        
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                "SELECT caste_cat FROM caste WHERE casteCat_cd = ?",
+                new String[]{id}
+            );
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting caste category", e);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return "Not Available";
+    }
+
+    private String getUnitName(String id) {
+        if (id == null || id.isEmpty()) return "Not Available";
+        
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                "SELECT unit_nm FROM unitdep WHERE unit_cd = ?",
+                new String[]{id}
+            );
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting unit name", e);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return "Not Available";
+    }
+
+    private String getRankName(String id) {
+        if (id == null || id.isEmpty()) return "Not Available";
+        
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                "SELECT rnk_nm FROM rnk_brn_mas WHERE rnk_cd = ?",
+                new String[]{id}
+            );
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting rank name", e);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return "Not Available";
+    }
+
+    private String getCadreName(String id) {
+        if (id == null || id.isEmpty()) return "Not Available";
+        
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                "SELECT brn_nm FROM rnk_brn_mas WHERE brn_cd = ?",
+                new String[]{id}
+            );
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting cadre name", e);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return "Not Available";
+    }
+
+    private String getDateOfJoining(String uid) {
+        if (uid == null || uid.isEmpty()) return "Not Available";
+        
+        Cursor cursor = null;
+        try {
+            cursor = database.rawQuery(
+                "SELECT dateofjoin FROM joininfo WHERE uidno = ? AND dateofrelv IS NULL",
+                new String[]{uid}
+            );
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting date of joining", e);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return "Not Available";
     }
 
     @Override
