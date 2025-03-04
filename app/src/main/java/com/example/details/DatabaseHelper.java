@@ -17,7 +17,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String TAG = "DatabaseHelper";
     private static final int DATABASE_VERSION = 1;
-    private static final String DATABASE_NAME = "pims_all.db";
+    private static final String DATABASE_NAME = "pims_2Dec.db";
 
     private final Context mContext;
     private SQLiteDatabase mDatabase;

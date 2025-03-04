@@ -93,7 +93,7 @@
                         android:id="@+id/btn_allsearch"
                         android:layout_width="match_parent"
                         android:layout_height="64dp"
-                        android:text="Search All"
+                        android:text="Search"
                         android:textSize="16sp"
                         app:icon="@drawable/ic_search"
                         android:backgroundTint="@color/md_theme_light_surfaceVariant"
@@ -212,9 +212,9 @@
                             android:layout_height="64dp"
                             android:layout_weight="1"
                             android:layout_marginEnd="4dp"
-                            android:text="By Unit"
+                            android:text="Unit Search"
                             android:textSize="16sp"
-                            style="@style/Widget.Material3.Button.OutlinedButton"/>
+                            style="@style/Widget.Material3.Button.TonalButton"/>
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_ranksearch"
@@ -222,13 +222,40 @@
                             android:layout_height="64dp"
                             android:layout_weight="1"
                             android:layout_marginStart="4dp"
-                            android:text="By Rank"
+                            android:text="Rank Search"
                             android:textSize="16sp"
-                            style="@style/Widget.Material3.Button.OutlinedButton"/>
+                            style="@style/Widget.Material3.Button.TonalButton"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_individualsearch"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="0dp"
+                            android:layout_height="64dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:text="Individual Search"
+                            android:textSize="16sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_tblsearch"
+                            android:layout_width="0dp"
+                            android:layout_height="64dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="4dp"
+                            android:text="Table Search"
+                            android:textSize="16sp"
+                            style="@style/Widget.Material3.Button.TonalButton"/>
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_tblsearch"
+                        android:id="@+id/btn_mastersearch"
                         android:layout_width="match_parent"
                         android:layout_height="64dp"
                         android:layout_marginTop="8dp"
@@ -239,6 +266,13 @@
                         style="@style/Widget.Material3.Button.ElevatedButton"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <Button
+                android:id="@+id/reportsButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="View Reports"
+                android:layout_margin="8dp"/>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
@@ -49,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
         MaterialButton btnUnitSearch = findViewById(R.id.btn_unitsearch);
         MaterialButton btnRankSearch = findViewById(R.id.btn_ranksearch);
         MaterialButton btnTableSearch = findViewById(R.id.btn_tblsearch);
+        MaterialButton btnIndividualSearch = findViewById(R.id.btn_individualsearch);
+        MaterialButton btnMasterSearch = findViewById(R.id.btn_mastersearch);
 
         // Set click listeners
         btnAllSearch.setOnClickListener(v -> {
@@ -94,6 +98,26 @@ public class MainActivity extends AppCompatActivity {
         btnTableSearch.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, TableSearchActivity.class);
             startActivity(intent);
+        });
+
+        btnIndividualSearch.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, IndividualSearchActivity.class);
+            startActivity(intent);
+        });
+
+        btnMasterSearch.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, TableSearchActivity.class);
+            startActivity(intent);
+        });
+
+        // Add in onCreate after other button initializations
+        Button reportsButton = findViewById(R.id.reportsButton);
+        reportsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, ReportsActivity.class);
+                startActivity(intent);
+            }
         });
     }
 

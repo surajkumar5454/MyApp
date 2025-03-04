@@ -39,7 +39,7 @@ public class DetailsActivity extends AppCompatActivity {
 
      //   Toast.makeText(this, "Long press on any value to copy", Toast.LENGTH_LONG).show();
 
-        database = SQLiteDatabase.openDatabase(getDatabasePath("pims_all.db").toString(), null, SQLiteDatabase.OPEN_READONLY);
+        database = SQLiteDatabase.openDatabase(getDatabasePath("pims_2Dec.db").toString(), null, SQLiteDatabase.OPEN_READONLY);
 
         // Initialize images database
         imagesDatabase = SQLiteDatabase.openDatabase(getDatabasePath("images_resize.db").toString(), null, SQLiteDatabase.OPEN_READONLY);
